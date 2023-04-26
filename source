@@ -1,0 +1,24 @@
+#Follow the commands in the link
+https://github.com/datasith/Ai_Demos_RPi/wiki/Raspberry-Pi-4-and-Intel-RealSense-D435
+
+#if ssl error came then use the following commmand
+sudo apt install libssl-dev
+
+#if xorg-dev error came then use the following command first then install xorg-dev
+sudo apt-get install libdrm2=2.4.104-1 libdrm-radeon1=2.4.104-1 libdrm-nouveau2=2.4.104-1 libdrm-amdgpu1=2.4.104-1 libdrm-omap1=2.4.104-1
+
+#this is the source list used. Copy these file to /etc/apt/sources.list
+deb http://deb.debian.org/debian bullseye main contrib non-free
+deb http://security.debian.org/debian-security bullseye-security main contrib non-free
+deb http://deb.debian.org/debian bullseye-updates main contrib non-free
+# Uncomment deb-src lines below then 'apt-get update' to enable 'apt-get source'
+#deb-src http://deb.debian.org/debian bullseye main contrib non-free
+#deb-src http://security.debian.org/debian-security bullseye-security main contrib non-free
+#deb-src http://deb.debian.org/debian bullseye-updates main contrib non-free
+
+then run
+sudo apt update
+
+solve the public key error from google
+
+
