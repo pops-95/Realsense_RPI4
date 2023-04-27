@@ -1,6 +1,9 @@
 #Follow the commands in the link
 https://github.com/datasith/Ai_Demos_RPi/wiki/Raspberry-Pi-4-and-Intel-RealSense-D435
 
+#use this cmake command
+cmake ../ -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=true -DBUILD_GRAPHICAL_EXAMPLES=true -DFORCE_LIBUVC=true
+
 #if ssl error came then use the following commmand
 sudo apt install libssl-dev
 
