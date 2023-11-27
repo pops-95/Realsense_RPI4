@@ -18,17 +18,16 @@ global point
 
     # Define a callback function for mouse events
 def mouse_callback(event, x, y, flags, param):
-    if event == cv2.EVENT_LBUTTONDOWN:
+     if event == cv2.EVENT_LBUTTONDOWN:
         # Get the depth frame
+        global point
         point=(x,y)
         print(point)
         return point
-        # Get the x, y, and z coordinates of the tapped pixel
-        # depth = depth_frame.get_distance(x, y)
 
 # Create a window and set the mouse callback function
 cv2.namedWindow("Frame", cv2.WINDOW_AUTOSIZE)
-cv2.setMouseCallback("Frame",mouse_callback)
+
 
 
 stop=False
@@ -40,7 +39,7 @@ disparity2depth=rs.disparity_transform(False)
 spat=rs.spatial_filter()
 spat.set_option(rs.option.holes_fill,5)
 temp=rs.temporal_filter()
-align_to=rs.align(rs.stream.depth)
+align_to=rs.align(rs.stream.color)
 
 
 def post_processing_thread(lock):
@@ -51,30 +50,16 @@ def post_processing_thread(lock):
         if(data):
             data=align_to.process(data)
             # print("ok")
-            data=data.get_depth_frame()
+            # data=data.get_depth_frame()
+            data.as_frameset()
             # print(data.get_height())
             lock.acquire()
             data=depth2disparity.process(data)
             data=spat.process(data)
             data=temp.process(data)
             data=disparity2depth.process(data)
-            # data=color_map.colorize(data)
-            data=data.as_frame()
-            # if(data.is_frame()):
-            #     print("data frame")
             processed_frame.enqueue(data)
             lock.release()
-  
-        # if data:
-        #     data=depth2disparity.process(data)
-        #     data=spat.process(data)
-        #     data=temp.process(data)
-        #     data=disparity2depth.process(data)
-        #     data=color_map.colorize(data)
-        #     processed_frame.enqueue(data)
-        # else:
-        #     print("no data")
-
 
 if __name__=="__main__":
     point=(400,200)
@@ -96,15 +81,14 @@ if __name__=="__main__":
     while(True):
         # cv2.setMouseCallback("Color Stream", mouse_callback)
         # print("Inside main")
-        current_frameset=processed_frame.poll_for_frame()
-        if(current_frameset.is_frame()):
-            # depth=current_frameset.wait_for_frame()
-            depth=current_frameset.as_depth_frame()
-            # Depth value at the chosen pixel
+        cv2.setMouseCallback("Frame",mouse_callback)
+        current_frameset=processed_frame.poll_for_frame().as_frameset()
+        if(current_frameset.is_frameset()):
+            depth=current_frameset.get_depth_frame()
+            color=current_frameset.get_color_frame()
             depth_value = depth.get_distance(point[0],point[1])
-            print(depth_value)
-            depth=color_map.colorize(depth)
-            color_image = np.asanyarray(depth.get_data())
+            color_image = np.asanyarray(color.get_data())
+            cv2.putText(color_image,"{:.3f}m".format(depth_value),(point[0],point[1]-20),cv2.FONT_HERSHEY_PLAIN,2,(255,255,255),3)
             cv2.imshow("Frame",color_image)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             stop=True
