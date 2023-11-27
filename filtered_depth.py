@@ -16,19 +16,19 @@ global processed_frame
 global stop
 global point
 
-
-
     # Define a callback function for mouse events
 def mouse_callback(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONDOWN:
         # Get the depth frame
         point=(x,y)
+        print(point)
         return point
         # Get the x, y, and z coordinates of the tapped pixel
         # depth = depth_frame.get_distance(x, y)
-       
+
 # Create a window and set the mouse callback function
-cv2.namedWindow("Color Stream", cv2.WINDOW_AUTOSIZE)
+cv2.namedWindow("Frame", cv2.WINDOW_AUTOSIZE)
+cv2.setMouseCallback("Frame",mouse_callback)
 
 
 stop=False
@@ -98,15 +98,14 @@ if __name__=="__main__":
         # print("Inside main")
         current_frameset=processed_frame.poll_for_frame()
         if(current_frameset.is_frame()):
-            depth=current_frameset
-            # com_frame=rs.composite_frame(arg0=depth)
-            # depth_f=com_frame.get_depth_frame()
-            # print(depth_f.is_depth_frame())
-            # dept_values=depth_f.get_distance(point[0],point[1])
-            # print(dept_values)
+            # depth=current_frameset.wait_for_frame()
+            depth=current_frameset.as_depth_frame()
+            # Depth value at the chosen pixel
+            depth_value = depth.get_distance(point[0],point[1])
+            print(depth_value)
             depth=color_map.colorize(depth)
             color_image = np.asanyarray(depth.get_data())
-            cv2.imshow("Color Stream",color_image)
+            cv2.imshow("Frame",color_image)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             stop=True
             pipe.stop()
