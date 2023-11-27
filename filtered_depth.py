@@ -86,9 +86,18 @@ if __name__=="__main__":
         if(current_frameset.is_frameset()):
             depth=current_frameset.get_depth_frame()
             color=current_frameset.get_color_frame()
+            #get intrinsics
+            depth_intrin = depth.profile.as_video_stream_profile().intrinsics
+            #get depth value form point
             depth_value = depth.get_distance(point[0],point[1])
+            
+            #get global coordinates
+            # Convert pixel coordinates to 3D coordinates
+            d_point = rs.rs2_deproject_pixel_to_point(depth_intrin, [point[0], point[1]], depth_value)
+            x, y, z = round(d_point[0],3),round( d_point[1],3),round( d_point[2],3)
+            
             color_image = np.asanyarray(color.get_data())
-            cv2.putText(color_image,"{:.3f}m".format(depth_value),(point[0],point[1]-20),cv2.FONT_HERSHEY_PLAIN,2,(255,255,255),3)
+            cv2.putText(color_image,"{} , {} ,{} m".format(x,y,z),(point[0],point[1]-20),cv2.FONT_HERSHEY_PLAIN,2,(255,255,255),3)
             cv2.imshow("Frame",color_image)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             stop=True
