@@ -4,7 +4,7 @@ from pytransform3d.plot_utils import make_3d_axis
 import pytransform3d.transformations as pt
 
 R=np.eye(3)
-P=[-0.017,-0.157,-0.880]
+P=[-0.017,-0.157,-0.880] 
 A2B=pt.transform_from(R,P)
 print("Transformation Matrix:")
 print(A2B)
