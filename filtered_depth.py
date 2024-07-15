@@ -17,25 +17,35 @@ global stop
 global point
 
 
-range_pixel=20
+range_pixel=5
 
 #Averaging the filter within certain range pixel
-def filtered_depth(depth_data):
+def filtered_depth(depth_array):
+    global point
     count=0
     sum__=0
     avg__=0
+    # print(depth_array.height)
+    # print(depth_array.width)
     
     max_range_x=point[0]+range_pixel
+    min_range_x=point[0]-range_pixel
     max_range_y=point[1]+range_pixel
+    min_range_y=point[1]-range_pixel
     
-    for i in range(point[0],max_range_x):
-        for j in range(point[1],max_range_y):
-            depth_value=depth.get_distance(point[i],point[j])
+    for i in range(min_range_x,max_range_x,1):
+        for j in range(min_range_y,max_range_y,1):
+            # print("i = {} , j = {} ".format(i,j))
+            depth_value=depth_array.get_distance(i,j)
             if( depth_value!=0):
                 sum__=sum__+depth_value
                 count=count+1
     
-    avg__=sum__/count
+    try:
+        avg__=sum__/count
+        
+    except Exception as e:
+        print(e)
     
     return avg__         
        
@@ -86,7 +96,7 @@ def post_processing_thread(lock):
             lock.release()
 
 if __name__=="__main__":
-    point=(400,200)
+    point=(360,620)
     pipe=rs.pipeline()
     cfg=rs.config()
     lock=threading.Lock()
@@ -117,14 +127,18 @@ if __name__=="__main__":
             
             #get global coordinates
             # Convert pixel coordinates to 3D coordinates
+            # depth = np.asanyarray(depth.get_data())
+            depth_value=filtered_depth(depth)
             d_point = rs.rs2_deproject_pixel_to_point(depth_intrin, [point[0], point[1]], depth_value)
             x, y, z = round(d_point[0],3),round( d_point[1],3),round( d_point[2],3)
             
            
             color_image = np.asanyarray(color.get_data())
             cv2.circle(color_image, (int(depth_intrin.ppx),int(depth_intrin.ppy)), 3, (0,0,255),2)
-            cv2.putText(color_image,"{} , {} ,{} m".format(x,y,z),(point[0],point[1]-20),cv2.FONT_HERSHEY_PLAIN,2,(255,255,255),3)
+            cv2.putText(color_image,"{} , {} ,{} m".format(x,y,z),(point[0],point[1]-20),cv2.FONT_HERSHEY_PLAIN,1,(255,255,255),2)
             cv2.imshow("Frame",color_image)
+            print("x value= {} , y value= {} , z value={} ".format(x,y,z))
+
         if cv2.waitKey(1) & 0xFF == ord('q'):
             stop=True
             pipe.stop()
