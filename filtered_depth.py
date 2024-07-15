@@ -16,7 +16,7 @@ global processed_frame
 global stop
 global point
 
-    # Define a callback function for mouse events
+# Define a callback function for mouse events
 def mouse_callback(event, x, y, flags, param):
      if event == cv2.EVENT_LBUTTONDOWN:
         # Get the depth frame
