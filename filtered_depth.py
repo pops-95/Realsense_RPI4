@@ -16,6 +16,30 @@ global processed_frame
 global stop
 global point
 
+
+range_pixel=20
+
+#Averaging the filter within certain range pixel
+def filtered_depth(depth_data):
+    count=0
+    sum__=0
+    avg__=0
+    
+    max_range_x=point[0]+range_pixel
+    max_range_y=point[1]+range_pixel
+    
+    for i in range(point[0],max_range_x):
+        for j in range(point[1],max_range_y):
+            depth_value=depth.get_distance(point[i],point[j])
+            if( depth_value!=0):
+                sum__=sum__+depth_value
+                count=count+1
+    
+    avg__=sum__/count
+    
+    return avg__         
+       
+
 # Define a callback function for mouse events
 def mouse_callback(event, x, y, flags, param):
      if event == cv2.EVENT_LBUTTONDOWN:
