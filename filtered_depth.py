@@ -96,7 +96,9 @@ if __name__=="__main__":
             d_point = rs.rs2_deproject_pixel_to_point(depth_intrin, [point[0], point[1]], depth_value)
             x, y, z = round(d_point[0],3),round( d_point[1],3),round( d_point[2],3)
             
+           
             color_image = np.asanyarray(color.get_data())
+            cv2.circle(color_image, (int(depth_intrin.ppx),int(depth_intrin.ppy)), 3, (0,0,255),2)
             cv2.putText(color_image,"{} , {} ,{} m".format(x,y,z),(point[0],point[1]-20),cv2.FONT_HERSHEY_PLAIN,2,(255,255,255),3)
             cv2.imshow("Frame",color_image)
         if cv2.waitKey(1) & 0xFF == ord('q'):
