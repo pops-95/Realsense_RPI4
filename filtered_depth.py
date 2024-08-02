@@ -5,6 +5,7 @@
 ##      Open CV and Numpy integration        ##
 ###############################################
 
+import time
 import pyrealsense2 as rs
 import numpy as np
 import matplotlib.pyplot as plt 
@@ -17,6 +18,8 @@ global stop
 global point
 
 
+homogenous_matrix=np.array([[1,0,0,-227],[0,-1,0,-30],[0, 0 ,-1,885],[0,0,0,1]])
+print(homogenous_matrix)
 range_pixel=5
 
 #Averaging the filter within certain range pixel
@@ -131,14 +134,25 @@ if __name__=="__main__":
             depth_value=filtered_depth(depth)
             d_point = rs.rs2_deproject_pixel_to_point(depth_intrin, [point[0], point[1]], depth_value)
             x, y, z = round(d_point[0],3),round( d_point[1],3),round( d_point[2],3)
+            # mat=np.ones((4,1))
+            # mat[0]=(x*1000)
+            # mat[1]=(y*1000)
+            # mat[2]=(z*1000)
+            # # print(mat)
             
+            # act_values=np.dot(homogenous_matrix,mat)
+            # print(act_values)
+            # print("-----------------")
            
             color_image = np.asanyarray(color.get_data())
             cv2.circle(color_image, (int(depth_intrin.ppx),int(depth_intrin.ppy)), 3, (0,0,255),2)
+            cv2.circle(color_image,(point[0],point[1]), 3, (0,0,255),2)
             cv2.putText(color_image,"{} , {} ,{} m".format(x,y,z),(point[0],point[1]-20),cv2.FONT_HERSHEY_PLAIN,1,(255,255,255),2)
             cv2.imshow("Frame",color_image)
-            print("x value= {} , y value= {} , z value={} ".format(x,y,z))
-
+            print(" x value= {} , y value= {} , z value={} ".format(x,y,z))
+            # print(" \r Actual x value= {} , Actual y value= {} , Actual z value={} ".format(act_values[0],act_values[1],act_values[2])) 
+            # print(" \r  ------------------------")
+            time.sleep(0.5)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             stop=True
             pipe.stop()
