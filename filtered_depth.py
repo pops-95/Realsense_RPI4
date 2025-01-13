@@ -5,18 +5,79 @@
 ##      Open CV and Numpy integration        ##
 ###############################################
 
+import time
 import pyrealsense2 as rs
 import numpy as np
 import matplotlib.pyplot as plt 
 import cv2
 import threading
+import math
 
 global pipe
 global processed_frame
 global stop
 global point
 
-    # Define a callback function for mouse events
+
+homogenous_matrix=np.array([[1,0,0,-227],[0,-1,0,-30],[0, 0 ,-1,885],[0,0,0,1]])
+print(homogenous_matrix)
+range_pixel=5
+
+#Averaging the filter within certain range pixel
+def filtered_depth(depth_array):
+    global point
+    count=0
+    sum__=0
+    avg__=0
+    # print(depth_array.height)
+    # print(depth_array.width)
+    
+    max_range_x=point[0]+range_pixel
+    min_range_x=point[0]-range_pixel
+    max_range_y=point[1]+range_pixel
+    min_range_y=point[1]-range_pixel
+    
+    for i in range(min_range_x,max_range_x,1):
+        for j in range(min_range_y,max_range_y,1):
+            # print("i = {} , j = {} ".format(i,j))
+            depth_value=depth_array.get_distance(i,j)
+            if( depth_value!=0):
+                sum__=sum__+depth_value
+                count=count+1
+    
+    try:
+        avg__=sum__/count
+        
+    except Exception as e:
+        print(e)
+    
+    return avg__         
+       
+
+def weighted_avg(depth_array):
+    weighted_values=[]
+    
+    max_range_x=point[0]+range_pixel
+    min_range_x=point[0]-range_pixel
+    max_range_y=point[1]+range_pixel
+    min_range_y=point[1]-range_pixel
+    
+    for i in range(min_range_x,max_range_x,1):
+        for j in range(min_range_y,max_range_y,1):
+        # print("i = {} , j = {} ".format(i,j))
+            measured_depth=depth_array.get_distance(point[0],point[1])
+            depth_value=depth_array.get_distance(i,j)
+            diff=(measured_depth-depth_value)*1000
+            weight=pow(math.exp((-1)*pow(diff,2)),2)
+            weighted_values.append(weight)
+
+    print(weighted_values)
+    weighted_avg=sum()
+    # return weighted_avg
+
+
+
+# Define a callback function for mouse events
 def mouse_callback(event, x, y, flags, param):
      if event == cv2.EVENT_LBUTTONDOWN:
         # Get the depth frame
@@ -62,7 +123,8 @@ def post_processing_thread(lock):
             lock.release()
 
 if __name__=="__main__":
-    point=(400,200)
+    AllDistances=[]
+    point=(360,620)
     pipe=rs.pipeline()
     cfg=rs.config()
     lock=threading.Lock()
@@ -82,8 +144,12 @@ if __name__=="__main__":
         # cv2.setMouseCallback("Color Stream", mouse_callback)
         # print("Inside main")
         cv2.setMouseCallback("Frame",mouse_callback)
+        
         current_frameset=processed_frame.poll_for_frame().as_frameset()
         if(current_frameset.is_frameset()):
+            if(len(AllDistances)>=10):
+                AllDistances.clear()
+            
             depth=current_frameset.get_depth_frame()
             color=current_frameset.get_color_frame()
             #get intrinsics
@@ -93,12 +159,39 @@ if __name__=="__main__":
             
             #get global coordinates
             # Convert pixel coordinates to 3D coordinates
+            # depth = np.asanyarray(depth.get_data())
+            depth_value=filtered_depth(depth)
+            # weighted_avg(depth)
             d_point = rs.rs2_deproject_pixel_to_point(depth_intrin, [point[0], point[1]], depth_value)
             x, y, z = round(d_point[0],3),round( d_point[1],3),round( d_point[2],3)
+            if(z!=0):
+                AllDistances.append(z)
+                
             
+            
+                # mat=np.ones((4,1))
+            # mat[0]=(x*1000)
+            # mat[1]=(y*1000)
+            # mat[2]=(z*1000)
+            # # print(mat)
+            
+            # act_values=np.dot(homogenous_matrix,mat)
+            # print(act_values)
+            # print("-----------------")
+           
             color_image = np.asanyarray(color.get_data())
-            cv2.putText(color_image,"{} , {} ,{} m".format(x,y,z),(point[0],point[1]-20),cv2.FONT_HERSHEY_PLAIN,2,(255,255,255),3)
+            cv2.circle(color_image, (int(depth_intrin.ppx),int(depth_intrin.ppy)), 3, (0,0,255),2)
+            cv2.circle(color_image,(point[0],point[1]), 3, (0,0,255),2)
+            cv2.putText(color_image,"{} , {} ,{} m".format(x,y,z),(point[0],point[1]-20),cv2.FONT_HERSHEY_PLAIN,1,(255,255,255),2)
             cv2.imshow("Frame",color_image)
+            
+            # print(AllDistances)
+            if(len(AllDistances)>=10):
+                diff=max(AllDistances)-min(AllDistances)
+                print(" x value= {} , y value= {} , z value={} max_z= {}  min_z={} diff={}".format(x,y,z,max(AllDistances),min(AllDistances),round(diff,4)))
+            # print(" \r Actual x value= {} , Actual y value= {} , Actual z value={} ".format(act_values[0],act_values[1],act_values[2])) 
+            # print(" \r  ------------------------")
+            # time.sleep(0.5)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             stop=True
             pipe.stop()
